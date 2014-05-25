@@ -233,8 +233,8 @@ public class MainActivity extends Activity {
 	    double scaleX = 1d*currentWidth/MAP_WIDTH;
 	    double scaleY = 1d*currentHeight/MAP_HEIGHT;
 	    
-//	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
-	    drawDebugLocations(canvas, paint, scaleX, scaleY);
+	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+//	    drawDebugLocations(canvas, paint, scaleX, scaleY);
 	    imageView.setImageBitmap(mutableBitmap);
 	}
 	
