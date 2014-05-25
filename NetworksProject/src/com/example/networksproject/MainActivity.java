@@ -38,15 +38,15 @@ public class MainActivity extends Activity {
 	final int LOC_INDICATOR_RADIUS = 10;
 	// TODO find them programatically [[fakss99]]
 	// dimensions of the floorplan image used 
-	final int MAP_WIDTH = 544;
-	final int MAP_HEIGHT = 678;
+	final int MAP_WIDTH = 500;
+	final int MAP_HEIGHT = 770;
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_main);
 		backGround = BitmapFactory.decodeResource(getResources(),
-				R.drawable.map_squared);
+				R.drawable.map);
 
 		// Initiate wifi service manager
 		wifiMan = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -122,7 +122,6 @@ public class MainActivity extends Activity {
 
 			Log.d("debug", "AP1 = "+AP1_level+"\\t AP2 = "+AP2_level);
 			double[] location = findLocation(AP1_level, AP2_level);
-//			drawCircle(location[0], location[1]);
 			drawLocation((int) location[0], (int)location[1]);
 			wifiMan.startScan();
 		}
@@ -194,6 +193,26 @@ public class MainActivity extends Activity {
 
 	}
 
+	
+	private void drawDebugLocations(Canvas canvas, Paint paint, double scaleX, double scaleY){
+		canvas.drawCircle((int) (404*scaleX), (int) (247*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (416*scaleX), (int) (402*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (355*scaleX), (int) (402*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (208*scaleX), (int) (247*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (207*scaleX), (int) (398*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (288*scaleX), (int) (323*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (320*scaleX), (int) (439*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (411*scaleX), (int) (573*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (276*scaleX), (int) (439*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (276*scaleX), (int) (579*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (309*scaleX), (int) (659*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) ( 98*scaleX), (int) (614*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) ( 97*scaleX), (int) (711*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (223*scaleX), (int) (194*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+		canvas.drawCircle((int) (253*scaleX), (int) (81*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+	}
+	
+	
 	private void drawLocation(int x, int y){
 		// http://stackoverflow.com/questions/18520287/draw-a-circle-on-an-existing-image
 		ImageView imageView = (ImageView)findViewById(R.id.floorplan);
@@ -208,15 +227,14 @@ public class MainActivity extends Activity {
 	    Bitmap mutableBitmap = Bitmap.createBitmap(bitmap).copy(Bitmap.Config.ARGB_8888, true);
 	    Canvas canvas = new Canvas(mutableBitmap);
 	    
-	    
 	    int currentWidth = imageView.getWidth(); // after android auto scaling
 	    int currentHeight = imageView.getHeight(); // after android auto scaling
 	    
 	    double scaleX = 1d*currentWidth/MAP_WIDTH;
 	    double scaleY = 1d*currentHeight/MAP_HEIGHT;
 	    
-	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
-	    
+//	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+	    drawDebugLocations(canvas, paint, scaleX, scaleY);
 	    imageView.setImageBitmap(mutableBitmap);
 	}
 	
