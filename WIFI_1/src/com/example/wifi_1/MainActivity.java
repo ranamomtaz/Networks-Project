@@ -1,9 +1,7 @@
 package com.example.wifi_1;
 
 import android.os.Bundle;
-import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.util.Log;
 import android.view.Menu;
 import java.util.List;
 import android.content.BroadcastReceiver;
@@ -94,7 +92,7 @@ public class MainActivity extends Activity {
 
 			for (int i = 0; i < wifiList.size(); i++) {
 
-				sb.append(new Integer(i + 1).toString() + ". ");
+				sb.append( (i + 1)+ ". ");
 				ScanResult temp = wifiList.get(i);
 				sb.append("Name: " + temp.SSID + "\n");
 				sb.append("Mac Address: " + temp.BSSID + "\n");

@@ -17,60 +17,61 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+/*
+ * please check http://stackoverflow.com/questions/18741034/how-to-get-available-wifi-networks-and-display-them-in-a-list-in-android
+ */
 
 public class MainActivity extends Activity {
 
 	Bitmap backGround;
-	WifiManager mainWifi;
-	WifiReceiver receiverWifi;
+	WifiManager wifiMan;
+	WifiReceiver wifiReceiver;
 	List<ScanResult> wifiList;
 	String AP1_MAC, AP2_MAC; 
 	double[][] db_list;
-
+	final int LOC_INDICATOR_RADIUS = 10;
+	// TODO find them programatically [[fakss99]]
+	// dimensions of the floorplan image used 
+	final int MAP_WIDTH = 544;
+	final int MAP_HEIGHT = 678;
+	
 	public void onCreate(Bundle savedInstanceState) {
-
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_main);
 		backGround = BitmapFactory.decodeResource(getResources(),
-				R.drawable.map);
+				R.drawable.map_squared);
 
 		// Initiate wifi service manager
-		mainWifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+		wifiMan = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-		// Check for wifi is disabled
-		if (mainWifi.isWifiEnabled() == false) {
-			// If wifi disabled then enable it
-			Toast.makeText(getApplicationContext(),
-					"wifi is disabled..making it enabled", Toast.LENGTH_LONG)
-					.show();
-
-			mainWifi.setWifiEnabled(true);
+		// Check if wifi is disabled
+		if (wifiMan.isWifiEnabled() == false) {
+			// If wifi is disabled .. enable it
+			Toast.makeText(getApplicationContext(), "WiFi is disabled..enabling WiFi", Toast.LENGTH_LONG).show();
+			wifiMan.setWifiEnabled(true);
 		}
 
-		// wifi scaned value broadcast receiver
-		receiverWifi = new WifiReceiver();
+		// wifi scanned value broadcast receiver
+		wifiReceiver = new WifiReceiver();
 
 		// Register broadcast receiver
-		// Broacast receiver will automatically call when number of wifi
-		// connections changed
-		registerReceiver(receiverWifi, new IntentFilter(
-				WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+		// BroadcastReceiver will be automatically called when the number of wifi connections changes
+		registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 
 		try {
-			readFile();
+			readFingerprintFile();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		mainWifi.startScan();
+		wifiMan.startScan();
 
 	}
 
@@ -80,30 +81,33 @@ public class MainActivity extends Activity {
 	}
 
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		mainWifi.startScan();
+		wifiMan.startScan();
 		return super.onMenuItemSelected(featureId, item);
 	}
 
 	protected void onPause() {
-		unregisterReceiver(receiverWifi);
+		unregisterReceiver(wifiReceiver);
 		super.onPause();
 	}
 
 	protected void onResume() {
-		registerReceiver(receiverWifi, new IntentFilter(
+		registerReceiver(wifiReceiver, new IntentFilter(
 				WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 		super.onResume();
 	}
 
-	// Broadcast receiver class called its receive method
-	// when number of wifi connections changed
+	
+	
+	
+	// Broadcast receiver class calls its receive method
+	// when number of wifi connections changes
 
 	class WifiReceiver extends BroadcastReceiver {
 
-		// This method call when number of wifi connections changed
+		// called when number of wifi connection changes 
 		public void onReceive(Context c, Intent intent) {
 
-			wifiList = mainWifi.getScanResults();
+			wifiList = wifiMan.getScanResults();
 			int AP1_level = 0, AP2_level = 0;
 			for (int i = 0; i < wifiList.size(); i++) {
 				ScanResult temp = wifiList.get(i);
@@ -116,16 +120,16 @@ public class MainActivity extends Activity {
 				}
 			}
 
-			Log.d("debug", "ap1 = "+AP1_level+" ap2= "+AP2_level);
+			Log.d("debug", "AP1 = "+AP1_level+"\\t AP2 = "+AP2_level);
 			double[] location = findLocation(AP1_level, AP2_level);
-			drawCircle(location[0], location[1]);
-
-			mainWifi.startScan();
+//			drawCircle(location[0], location[1]);
+			drawLocation((int) location[0], (int)location[1]);
+			wifiMan.startScan();
 		}
 
 	}
 
-	private void readFile() throws IOException {
+	private void readFingerprintFile() throws IOException {
 		String str = "";
 		InputStream is = this.getResources().openRawResource(R.raw.db);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -145,7 +149,7 @@ public class MainActivity extends Activity {
 					
 					String[] array = str.split(",");
 					for (int i = 0; i < array.length; i++) {
-						db_list[location-1][i] = Double.parseDouble(array[i]);
+						db_list[location-1][i] = Double.parseDouble(array[i].trim());
 					}
 
 				}
@@ -159,46 +163,61 @@ public class MainActivity extends Activity {
 
 	private double eucDist(double value1, double reading1, double value2, double reading2) {
 		double Sum = 0.0;
-
 		Sum = Math.pow((value1 - reading1), 2.0)
 				+ Math.pow((value2 - reading2), 2.0);
-
 		return Math.sqrt(Sum);
 	}
 
+	/**
+	 * @param read1 wifi signal strength of AP1
+	 * @param read2 wifi signal strength of AP2
+	 * @return the estimated distance of current user location
+	 */
 	private double[] findLocation(int read1, int read2) {
-		int location = 0; // location of minimum distance
-		double minDist = eucDist(db_list[location][0], read1,
-				db_list[location][1], read2);
+		int location = 0; // location index of minimum distance
+		
+		double minDist = eucDist(db_list[location][0], read1, db_list[location][1], read2);
+		
 		for (int i = 1; i < db_list.length; i++) {
-			double currDist = eucDist(db_list[i][0], read1, db_list[i][1],
-					read2);
+			double currDist = eucDist(db_list[i][0], read1, db_list[i][1], read2);
 			if (currDist < minDist) {
 				minDist = currDist;
 				location = i;
 			}
 		}
+		
+		// TODO 
+		// index db_list[:][2],db_list[:][3] are the absolute postions of location on the image
 		double[] loc = { db_list[location][2], db_list[location][3] };
 
 		return loc;
 
 	}
 
-	private void drawCircle(double x, double y) {
-		Paint paint = new Paint();
-		paint.setStyle(Paint.Style.STROKE);
-		paint.setStrokeWidth(10);
-		paint.setColor(Color.parseColor("#0000FF"));
-		Bitmap bg = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
-		Canvas canvas = new Canvas(bg);
-		canvas.drawBitmap(backGround, 0, 0, paint);
+	private void drawLocation(int x, int y){
+		// http://stackoverflow.com/questions/18520287/draw-a-circle-on-an-existing-image
+		ImageView imageView = (ImageView)findViewById(R.id.floorplan);
+	    Paint paint = new Paint();
+	    paint.setAntiAlias(true);
+	    paint.setStyle(Paint.Style.STROKE);
+	    paint.setColor(Color.BLUE);
+	    paint.setStrokeWidth(10);
 
-		canvas.drawCircle((int)x, (int)y, 20, paint);
-
-		// .drawArc(new RectF(x,y,x+50,y+50), 0, 360, false, paint);
-		LinearLayout ll = (LinearLayout) findViewById(R.id.layout);
-
-		ll.setBackgroundDrawable(new BitmapDrawable(bg));
-
+	    
+	    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.map);
+	    Bitmap mutableBitmap = Bitmap.createBitmap(bitmap).copy(Bitmap.Config.ARGB_8888, true);
+	    Canvas canvas = new Canvas(mutableBitmap);
+	    
+	    
+	    int currentWidth = imageView.getWidth(); // after android auto scaling
+	    int currentHeight = imageView.getHeight(); // after android auto scaling
+	    
+	    double scaleX = 1d*currentWidth/MAP_WIDTH;
+	    double scaleY = 1d*currentHeight/MAP_HEIGHT;
+	    
+	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+	    
+	    imageView.setImageBitmap(mutableBitmap);
 	}
-}
+	
+	}
