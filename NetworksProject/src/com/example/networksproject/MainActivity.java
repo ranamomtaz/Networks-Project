@@ -227,14 +227,14 @@ public class MainActivity extends Activity {
 	    Bitmap mutableBitmap = Bitmap.createBitmap(bitmap).copy(Bitmap.Config.ARGB_8888, true);
 	    Canvas canvas = new Canvas(mutableBitmap);
 	    
-	    int currentWidth = imageView.getWidth(); // after android auto scaling
-	    int currentHeight = imageView.getHeight(); // after android auto scaling
+	    int currentWidth = mutableBitmap.getWidth(); // after android auto scaling
+	    int currentHeight = mutableBitmap.getHeight(); // after android auto scaling
 	    
 	    double scaleX = 1d*currentWidth/MAP_WIDTH;
 	    double scaleY = 1d*currentHeight/MAP_HEIGHT;
 	    
-	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
-//	    drawDebugLocations(canvas, paint, scaleX, scaleY);
+//	    canvas.drawCircle((int) (x*scaleX), (int) (y*scaleY), 2*LOC_INDICATOR_RADIUS, paint);
+	    drawDebugLocations(canvas, paint, scaleX, scaleY);
 	    imageView.setImageBitmap(mutableBitmap);
 	}
 	
